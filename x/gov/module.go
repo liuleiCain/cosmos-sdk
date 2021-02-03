@@ -25,6 +25,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/gov/client/cli"
 	"github.com/cosmos/cosmos-sdk/x/gov/client/rest"
 	"github.com/cosmos/cosmos-sdk/x/gov/keeper"
+	v042gov "github.com/cosmos/cosmos-sdk/x/gov/legacy/v042"
 	"github.com/cosmos/cosmos-sdk/x/gov/simulation"
 	"github.com/cosmos/cosmos-sdk/x/gov/types"
 )
@@ -159,6 +160,7 @@ func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sd
 func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper))
 	types.RegisterQueryServer(cfg.QueryServer(), am.keeper)
+	cfg.RegisterMigration(types.ModuleName, 0, v042gov.MigrateStore)
 }
 
 // InitGenesis performs genesis initialization for the gov module. It returns
@@ -178,7 +180,7 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONMarshaler) json
 }
 
 // ConsensusVersion tracks state-breaking versions of the module.
-func (AppModule) ConsensusVersion() uint64 { return 0 }
+func (AppModule) ConsensusVersion() uint64 { return 1 }
 
 // BeginBlock performs a no-op.
 func (AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
