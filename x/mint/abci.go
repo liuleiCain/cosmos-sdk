@@ -20,7 +20,11 @@ func BeginBlocker(ctx sdk.Context, k Keeper) {
 
 	// mint coins, update supply
 	mintedCoin := minter.BlockProvision(params)
-	mintedCoin.Amount = sdk.NewInt(int64(1)) //fixed 1 coins
+
+	//Change the revenue model
+	amount := minter.CalculateCoin(ctx.BlockHeight(), params)
+	mintedCoin.Amount = amount
+
 	mintedCoins := sdk.NewCoins(mintedCoin)
 
 	err := k.MintCoins(ctx, mintedCoins)
