@@ -111,3 +111,58 @@ func (k Keeper) MintCoins(ctx sdk.Context, newCoins sdk.Coins) error {
 func (k Keeper) AddCollectedFees(ctx sdk.Context, fees sdk.Coins) error {
 	return k.supplyKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, k.feeCollectorName, fees)
 }
+
+// CalculateCoin calculate coins per month with fixed total
+// CalculateCoin to be used in BeginBlocker.
+func (k Keeper) CalculateCoin(ctx sdk.Context, params types.Params) sdk.Int {
+	//get basic constant
+	totalSupply := params.TotalSupply
+	unitCoin := params.UnitCoin
+
+	//Get the current height of coins
+	nowCycle := ctx.BlockHeight() / params.BlocksPerUnit //per hour calculate
+	count := int64(0)
+	for {
+		if count >= nowCycle {
+			break
+		}
+		unitCoin = unitCoin.Mul(sdk.NewDecWithPrec(90, 2)) //Get rewards in the current period
+		count++
+	}
+
+	//mint logical processing
+	if unitCoin.LTE(sdk.NewDec(0)) {
+		return sdk.NewInt(0)
+	}
+	nowTotalSupply := k.GetNowTotalSupply(ctx)
+
+	if nowTotalSupply.LT(sdk.NewDec(0)) {
+		k.SetNowTotalSupply(ctx, totalSupply.Sub(unitCoin))
+	} else if nowTotalSupply.GT(sdk.NewDec(0)) && nowTotalSupply.GTE(unitCoin) {
+		k.SetNowTotalSupply(ctx, nowTotalSupply.Sub(unitCoin))
+	} else if nowTotalSupply.GT(sdk.NewDec(0)) && nowTotalSupply.LT(unitCoin) {
+		k.SetNowTotalSupply(ctx, nowTotalSupply.Sub(nowTotalSupply))
+		unitCoin = nowTotalSupply
+	} else {
+		unitCoin = sdk.NewDec(0)
+	}
+
+	//fmt.Println("height:", ctx.BlockHeight(), "nowCycle:", nowCycle, "newCoin:", unitCoin, "nowTotalSupply", k.GetNowTotalSupply(ctx))
+	return unitCoin.TruncateInt()
+}
+
+func (k Keeper) GetNowTotalSupply(ctx sdk.Context) sdk.Dec {
+	store := ctx.KVStore(k.storeKey)
+	if !store.Has([]byte(types.NowTotalSupply)) {
+		return sdk.NewDec(-1)
+	}
+	var data sdk.Dec
+	bz := store.Get([]byte(types.NowTotalSupply))
+	k.cdc.MustUnmarshalBinaryBare(bz, &data)
+	return data
+}
+
+func (k Keeper) SetNowTotalSupply(ctx sdk.Context, supply sdk.Dec) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set([]byte(types.NowTotalSupply), k.cdc.MustMarshalBinaryBare(supply))
+}

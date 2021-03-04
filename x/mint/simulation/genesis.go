@@ -4,6 +4,7 @@ package simulation
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -83,7 +84,11 @@ func RandomizedGenState(simState *module.SimulationState) {
 
 	mintDenom := sdk.DefaultBondDenom
 	blocksPerYear := uint64(60 * 60 * 8766 / 5)
-	params := types.NewParams(mintDenom, inflationRateChange, inflationMax, inflationMin, goalBonded, blocksPerYear)
+	totalSupply := sdk.NewDec(21000000).MulInt64(int64(math.Pow10(18)))
+	blocksPerUnit := int64(17820)
+	unitCoin := sdk.NewDec(1).MulInt64(int64(math.Pow10(18)))
+
+	params := types.NewParams(mintDenom, inflationRateChange, inflationMax, inflationMin, goalBonded, blocksPerYear, totalSupply, blocksPerUnit, unitCoin)
 
 	mintGenesis := types.NewGenesisState(types.InitialMinter(inflation), params)
 

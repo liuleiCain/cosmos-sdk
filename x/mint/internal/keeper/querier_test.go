@@ -78,3 +78,12 @@ func TestQueryAnnualProvisions(t *testing.T) {
 
 	require.Equal(t, app.MintKeeper.GetMinter(ctx).AnnualProvisions, annualProvisions)
 }
+
+func TestCalculateCoin(b *testing.T) {
+	app, ctx := createTestApp(true)
+	params := types.DefaultParams()
+
+	for n := 0; n < 2100; n++ {
+		app.MintKeeper.CalculateCoin(ctx, params)
+	}
+}

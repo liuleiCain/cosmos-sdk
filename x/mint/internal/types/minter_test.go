@@ -129,14 +129,3 @@ func BenchmarkNextAnnualProvisions(b *testing.B) {
 	}
 
 }
-
-// Next annual provisions benchmarking
-// BenchmarkNextAnnualProvisions-4 5000000 251 ns/op
-func BenchmarkCalculateCoin(b *testing.B) {
-	minter := InitialMinter(sdk.NewDecWithPrec(1, 1))
-	params := DefaultParams()
-
-	for n := 0; n < 720; n++ {
-		minter.CalculateCoin(int64(n), params)
-	}
-}

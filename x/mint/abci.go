@@ -22,7 +22,7 @@ func BeginBlocker(ctx sdk.Context, k Keeper) {
 	mintedCoin := minter.BlockProvision(params)
 
 	//Change the revenue model
-	amount := minter.CalculateCoin(ctx.BlockHeight(), params)
+	amount := k.CalculateCoin(ctx, params)
 	mintedCoin.Amount = amount
 
 	mintedCoins := sdk.NewCoins(mintedCoin)

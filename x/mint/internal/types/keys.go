@@ -17,6 +17,8 @@ const (
 	// QuerierRoute is the querier route for the minting store.
 	QuerierRoute = StoreKey
 
+	NowTotalSupply = "nowTotalSupply"
+
 	// Query endpoints supported by the minting querier
 	QueryParameters       = "parameters"
 	QueryInflation        = "inflation"

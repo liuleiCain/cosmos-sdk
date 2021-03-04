@@ -3,7 +3,6 @@ package types
 import (
 	"fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"math"
 )
 
 // Minter represents the minting state.
@@ -83,27 +82,4 @@ func (m Minter) NextAnnualProvisions(_ Params, totalSupply sdk.Int) sdk.Dec {
 func (m Minter) BlockProvision(params Params) sdk.Coin {
 	provisionAmt := m.AnnualProvisions.QuoInt(sdk.NewInt(int64(params.BlocksPerYear)))
 	return sdk.NewCoin(params.MintDenom, provisionAmt.TruncateInt())
-}
-
-// CalculateCoin calculate coins per month with fixed total
-// CalculateCoin to be used in BeginBlocker.
-func (m Minter) CalculateCoin(blockNumber int64, params Params) sdk.Int {
-	//get basic constant
-	//totalSupply := sdk.NewInt(int64(float64(21000000) * math.Pow10(18)))
-	unitCoin := sdk.NewDec(1).MulInt64(int64(math.Pow10(18)))
-	blocksPerQuarterHour := int64(180)
-
-	nowCycle := blockNumber / blocksPerQuarterHour //per hour calculate
-	count := int64(0)
-	for {
-		if count >= nowCycle {
-			break
-		}
-		unitCoin = unitCoin.Mul(sdk.NewDecWithPrec(110, 2)) //Get rewards in the current period
-		count++
-	}
-
-	//fmt.Println("height:", blockNumber, "nowCycle:", nowCycle, "newCoin:", unitCoin)
-
-	return unitCoin.TruncateInt()
 }
