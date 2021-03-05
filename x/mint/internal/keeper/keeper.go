@@ -149,7 +149,8 @@ func (k Keeper) CalculateCoin(ctx sdk.Context, params types.Params) sdk.Int {
 func (k Keeper) GetNowTotalSupply(ctx sdk.Context) sdk.Int {
 	store := ctx.KVStore(k.storeKey)
 	if !store.Has([]byte(types.NowTotalSupply)) {
-		return sdk.NewInt(-1)
+		params := k.GetParams(ctx)
+		store.Set([]byte(types.NowTotalSupply), k.cdc.MustMarshalBinaryBare(params.TotalSupply))
 	}
 	var data sdk.Int
 	bz := store.Get([]byte(types.NowTotalSupply))

@@ -23,4 +23,5 @@ const (
 	QueryParameters       = "parameters"
 	QueryInflation        = "inflation"
 	QueryAnnualProvisions = "annual_provisions"
+	QueryNowTotalSupply   = "now_total_supply"
 )

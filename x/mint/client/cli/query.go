@@ -28,6 +28,7 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 			GetCmdQueryParams(cdc),
 			GetCmdQueryInflation(cdc),
 			GetCmdQueryAnnualProvisions(cdc),
+			GetCmdQueryNowTotalSupply(cdc),
 		)...,
 	)
 
@@ -108,6 +109,32 @@ func GetCmdQueryAnnualProvisions(cdc *codec.Codec) *cobra.Command {
 			}
 
 			return cliCtx.PrintOutput(inflation)
+		},
+	}
+}
+
+// GetCmdQueryNowTotalSupply implements a command to return the current minting
+// int value.
+func GetCmdQueryNowTotalSupply(cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "now-total-supply",
+		Short: "Query the current minting now total supply value",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNowTotalSupply)
+			res, _, err := cliCtx.QueryWithData(route, nil)
+			if err != nil {
+				return err
+			}
+
+			var nowTotalSupply sdk.Int
+			if err := cdc.UnmarshalJSON(res, &nowTotalSupply); err != nil {
+				return err
+			}
+
+			return cliCtx.PrintOutput(nowTotalSupply)
 		},
 	}
 }

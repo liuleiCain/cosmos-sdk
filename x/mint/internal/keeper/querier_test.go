@@ -79,6 +79,21 @@ func TestQueryAnnualProvisions(t *testing.T) {
 	require.Equal(t, app.MintKeeper.GetMinter(ctx).AnnualProvisions, annualProvisions)
 }
 
+func TestQueryNowTotalSupply(t *testing.T) {
+	app, ctx := createTestApp(true)
+	querier := keep.NewQuerier(app.MintKeeper)
+
+	var nowTotalSupply sdk.Int
+
+	res, sdkErr := querier(ctx, []string{types.QueryNowTotalSupply}, abci.RequestQuery{})
+	require.NoError(t, sdkErr)
+
+	err := app.Codec().UnmarshalJSON(res, &nowTotalSupply)
+	require.NoError(t, err)
+
+	require.Equal(t, app.MintKeeper.GetNowTotalSupply(ctx), nowTotalSupply)
+}
+
 func TestCalculateCoin(b *testing.T) {
 	app, ctx := createTestApp(true)
 	params := types.DefaultParams()
