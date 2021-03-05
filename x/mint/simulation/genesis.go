@@ -84,11 +84,12 @@ func RandomizedGenState(simState *module.SimulationState) {
 
 	mintDenom := sdk.DefaultBondDenom
 	blocksPerYear := uint64(60 * 60 * 8766 / 5)
-	totalSupply := sdk.NewDec(21000000).MulInt64(int64(math.Pow10(18)))
+	totalSupply := sdk.NewInt(21000000).MulRaw(int64(math.Pow10(18)))
 	blocksPerUnit := int64(17820)
-	unitCoin := sdk.NewDec(1).MulInt64(int64(math.Pow10(18)))
+	unitCoin := sdk.NewInt(1).MulRaw(int64(math.Pow10(18)))
+	decrease := sdk.NewInt(90)
 
-	params := types.NewParams(mintDenom, inflationRateChange, inflationMax, inflationMin, goalBonded, blocksPerYear, totalSupply, blocksPerUnit, unitCoin)
+	params := types.NewParams(mintDenom, inflationRateChange, inflationMax, inflationMin, goalBonded, blocksPerYear, totalSupply, blocksPerUnit, unitCoin, decrease)
 
 	mintGenesis := types.NewGenesisState(types.InitialMinter(inflation), params)
 

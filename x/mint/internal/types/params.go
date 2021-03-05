@@ -21,6 +21,7 @@ var (
 	KeyTotalSupply         = []byte("TotalSupply")
 	KeyBlocksPerUnit       = []byte("BlocksPerUnit")
 	KeyUnitCoin            = []byte("UnitCoin")
+	KeyDecrease            = []byte("Decrease")
 )
 
 // mint parameters
@@ -31,9 +32,10 @@ type Params struct {
 	InflationMin        sdk.Dec `json:"inflation_min" yaml:"inflation_min"`                 // minimum inflation rate
 	GoalBonded          sdk.Dec `json:"goal_bonded" yaml:"goal_bonded"`                     // goal of percent bonded atoms
 	BlocksPerYear       uint64  `json:"blocks_per_year" yaml:"blocks_per_year"`             // expected blocks per year
-	TotalSupply         sdk.Dec `json:"total_supply" yaml:"total_supply"`                   // fixed total coins
-	BlocksPerUnit       int64   `json:"blocks_per_unit" yaml:"blocks_per_unit"`             // blocks per unit
-	UnitCoin            sdk.Dec `json:"unit_coin" yaml:"unit_coin"`                         // unit coin
+	TotalSupply         sdk.Int `json:"total_supply" yaml:"total_supply"`                   // fixed total coins
+	BlocksPerUnit       int64   `json:"blocks_per_unit" yaml:"blocks_per_unit"`             // blocks per unit, includes year、month、day、hour
+	UnitCoin            sdk.Int `json:"unit_coin" yaml:"unit_coin"`                         // unit coin
+	Decrease            sdk.Int `json:"decrease" yaml:"decrease"`                           //decrease
 }
 
 // ParamTable for minting module.
@@ -42,7 +44,7 @@ func ParamKeyTable() params.KeyTable {
 }
 
 func NewParams(
-	mintDenom string, inflationRateChange, inflationMax, inflationMin, goalBonded sdk.Dec, blocksPerYear uint64, totalSupply sdk.Dec, blocksPerUnit int64, unitCoin sdk.Dec,
+	mintDenom string, inflationRateChange, inflationMax, inflationMin, goalBonded sdk.Dec, blocksPerYear uint64, totalSupply sdk.Int, blocksPerUnit int64, unitCoin sdk.Int, decrease sdk.Int,
 ) Params {
 
 	return Params{
@@ -55,6 +57,7 @@ func NewParams(
 		TotalSupply:         totalSupply,
 		BlocksPerUnit:       blocksPerUnit,
 		UnitCoin:            unitCoin,
+		Decrease:            decrease,
 	}
 }
 
@@ -66,10 +69,11 @@ func DefaultParams() Params {
 		InflationMax:        sdk.NewDecWithPrec(20, 2),
 		InflationMin:        sdk.NewDecWithPrec(7, 2),
 		GoalBonded:          sdk.NewDecWithPrec(67, 2),
-		BlocksPerYear:       uint64(60 * 60 * 8766 / 5),                           // assuming 5 second block times
-		TotalSupply:         sdk.NewDec(21000000).MulInt64(int64(math.Pow10(18))), //total supply
+		BlocksPerYear:       uint64(60 * 60 * 8766 / 5),                         // assuming 5 second block times
+		TotalSupply:         sdk.NewInt(21000000).MulRaw(int64(math.Pow10(18))), //total supply
 		BlocksPerUnit:       int64(17820),
-		UnitCoin:            sdk.NewDec(1).MulInt64(int64(math.Pow10(18))),
+		UnitCoin:            sdk.NewInt(1).MulRaw(int64(math.Pow10(18))),
+		Decrease:            sdk.NewInt(90),
 	}
 }
 
@@ -100,6 +104,9 @@ func (p Params) Validate() error {
 		return err
 	}
 	if err := validateUnitCoin(p.UnitCoin); err != nil {
+		return err
+	}
+	if err := validateDecrease(p.UnitCoin); err != nil {
 		return err
 	}
 	if p.InflationMax.LT(p.InflationMin) {
@@ -139,6 +146,7 @@ func (p *Params) ParamSetPairs() params.ParamSetPairs {
 		params.NewParamSetPair(KeyTotalSupply, &p.TotalSupply, validateTotalSupply),
 		params.NewParamSetPair(KeyBlocksPerUnit, &p.BlocksPerUnit, validateBlocksPerUnit),
 		params.NewParamSetPair(KeyUnitCoin, &p.UnitCoin, validateUnitCoin),
+		params.NewParamSetPair(KeyDecrease, &p.Decrease, validateDecrease),
 	}
 }
 
@@ -236,7 +244,7 @@ func validateBlocksPerYear(i interface{}) error {
 }
 
 func validateTotalSupply(i interface{}) error {
-	v, ok := i.(sdk.Dec)
+	v, ok := i.(sdk.Int)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
@@ -244,7 +252,7 @@ func validateTotalSupply(i interface{}) error {
 	if v.IsNegative() {
 		return fmt.Errorf("total supply cannot be negative: %s", v)
 	}
-	if v.LT(sdk.OneDec()) {
+	if v.LTE(sdk.ZeroInt()) {
 		return fmt.Errorf("total supply too small: %s", v)
 	}
 
@@ -264,7 +272,7 @@ func validateBlocksPerUnit(i interface{}) error {
 	return nil
 }
 func validateUnitCoin(i interface{}) error {
-	v, ok := i.(sdk.Dec)
+	v, ok := i.(sdk.Int)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
@@ -272,7 +280,23 @@ func validateUnitCoin(i interface{}) error {
 	if v.IsNegative() {
 		return fmt.Errorf("unit coin cannot be negative: %s", v)
 	}
-	if v.LTE(sdk.OneDec()) {
+	if v.LTE(sdk.ZeroInt()) {
+		return fmt.Errorf("unit coin too small: %s", v)
+	}
+
+	return nil
+}
+
+func validateDecrease(i interface{}) error {
+	v, ok := i.(sdk.Int)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v.IsNegative() {
+		return fmt.Errorf("unit coin cannot be negative: %s", v)
+	}
+	if v.LTE(sdk.ZeroInt()) {
 		return fmt.Errorf("unit coin too small: %s", v)
 	}
 
